@@ -28,6 +28,11 @@ export const VirtualProps = {
     default: 50
   },
 
+  tableMode: {
+    type: Boolean,
+    default: false
+  },
+
   direction: {
     type: String,
     default: 'vertical' // the other value is horizontal
@@ -138,6 +143,10 @@ export const ItemProps = {
   },
   scopedSlots: {
     type: Object
+  },
+  tableMode: {
+    type: Boolean,
+    default: false
   }
 }
 

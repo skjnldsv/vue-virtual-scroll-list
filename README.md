@@ -149,6 +149,12 @@ More usages or getting start you can refer to these clearly [examples](https://g
       <td>50</td>
       <td>The estimate size of each item, if it is closer to the average size, the scrollbar length looks more accurately. It is <strong>recommended</strong> to assign the average that calculate by yourself.</td>
     </tr>
+    <tr>
+      <td><code>table-mode</code></td>
+      <td>Boolean</td>
+      <td>false</td>
+      <td>Make this scroller use table and tr as wrappers. This also remove the default `role` attributes.</td>
+    </tr>
   </table>
 </details>
 

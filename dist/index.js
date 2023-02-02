@@ -486,6 +486,10 @@
       type: Number,
       "default": 50
     },
+    tableMode: {
+      type: Boolean,
+      "default": false
+    },
     direction: {
       type: String,
       "default": 'vertical' // the other value is horizontal
@@ -596,6 +600,10 @@
     },
     scopedSlots: {
       type: Object
+    },
+    tableMode: {
+      type: Boolean,
+      "default": false
     }
   };
   var SlotProps = {
@@ -661,7 +669,8 @@
           _this$scopedSlots = this.scopedSlots,
           scopedSlots = _this$scopedSlots === void 0 ? {} : _this$scopedSlots,
           uniqueKey = this.uniqueKey,
-          slotComponent = this.slotComponent;
+          slotComponent = this.slotComponent,
+          tableMode = this.tableMode;
 
       var props = _objectSpread2({}, extraProps, {
         source: source,
@@ -671,7 +680,7 @@
       return h(tag, {
         key: uniqueKey,
         attrs: {
-          role: 'listitem'
+          role: tableMode ? null : 'listitem'
         }
       }, [slotComponent ? h('div', slotComponent({
         item: source,
@@ -962,7 +971,8 @@
             isHorizontal = this.isHorizontal,
             extraProps = this.extraProps,
             dataComponent = this.dataComponent,
-            itemScopedSlots = this.itemScopedSlots;
+            itemScopedSlots = this.itemScopedSlots,
+            tableMode = this.tableMode;
         var slotComponent = this.$scopedSlots && this.$scopedSlots.item;
 
         for (var index = start; index <= end; index++) {
@@ -975,7 +985,7 @@
               slots.push(h(Item, {
                 props: {
                   index: index,
-                  tag: itemTag,
+                  tag: tableMode ? 'tr' : itemTag,
                   event: EVENT_TYPE.ITEM,
                   horizontal: isHorizontal,
                   uniqueKey: uniqueKey,
@@ -983,7 +993,8 @@
                   extraProps: extraProps,
                   component: dataComponent,
                   slotComponent: slotComponent,
-                  scopedSlots: itemScopedSlots
+                  scopedSlots: itemScopedSlots,
+                  tableMode: tableMode
                 },
                 style: itemStyle,
                 "class": "".concat(itemClass).concat(this.itemClassAdd ? ' ' + this.itemClassAdd(index) : '')
@@ -1019,7 +1030,8 @@
           headerStyle = this.headerStyle,
           footerTag = this.footerTag,
           footerClass = this.footerClass,
-          footerStyle = this.footerStyle;
+          footerStyle = this.footerStyle,
+          tableMode = this.tableMode;
       var paddingStyle = {
         padding: isHorizontal ? "0px ".concat(padBehind, "px 0px ").concat(padFront, "px") : "".concat(padFront, "px 0px ").concat(padBehind, "px")
       };
@@ -1039,10 +1051,10 @@
           uniqueKey: SLOT_TYPE.HEADER
         }
       }, header) : null, // main list
-      h(wrapTag, {
+      h(tableMode ? 'tbody' : wrapTag, {
         "class": wrapClass,
         attrs: {
-          role: 'group'
+          role: tableMode ? null : 'group'
         },
         style: wrapperStyle
       }, this.getRenderSlots(h)), // footer slot
