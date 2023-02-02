@@ -282,7 +282,7 @@ const VirtualList = Vue.component('virtual-list', {
     getRenderSlots (h) {
       const slots = []
       const { start, end } = this.range
-      const { dataSources, dataKey, itemClass, itemTag, itemStyle, isHorizontal, extraProps, dataComponent, itemScopedSlots } = this
+      const { dataSources, dataKey, itemClass, itemTag, itemStyle, isHorizontal, extraProps, dataComponent, itemScopedSlots, tableMode } = this
       const slotComponent = this.$scopedSlots && this.$scopedSlots.item
       for (let index = start; index <= end; index++) {
         const dataSource = dataSources[index]
@@ -292,7 +292,7 @@ const VirtualList = Vue.component('virtual-list', {
             slots.push(h(Item, {
               props: {
                 index,
-                tag: itemTag,
+                tag: tableMode ? 'tr' : itemTag,
                 event: EVENT_TYPE.ITEM,
                 horizontal: isHorizontal,
                 uniqueKey: uniqueKey,
@@ -300,7 +300,8 @@ const VirtualList = Vue.component('virtual-list', {
                 extraProps: extraProps,
                 component: dataComponent,
                 slotComponent: slotComponent,
-                scopedSlots: itemScopedSlots
+                scopedSlots: itemScopedSlots,
+                tableMode: tableMode
               },
               style: itemStyle,
               class: `${itemClass}${this.itemClassAdd ? ' ' + this.itemClassAdd(index) : ''}`
@@ -321,7 +322,7 @@ const VirtualList = Vue.component('virtual-list', {
   render (h) {
     const { header, footer } = this.$slots
     const { padFront, padBehind } = this.range
-    const { isHorizontal, pageMode, rootTag, wrapTag, wrapClass, wrapStyle, headerTag, headerClass, headerStyle, footerTag, footerClass, footerStyle } = this
+    const { isHorizontal, pageMode, rootTag, wrapTag, wrapClass, wrapStyle, headerTag, headerClass, headerStyle, footerTag, footerClass, footerStyle, tableMode } = this
     const paddingStyle = { padding: isHorizontal ? `0px ${padBehind}px 0px ${padFront}px` : `${padFront}px 0px ${padBehind}px` }
     const wrapperStyle = wrapStyle ? Object.assign({}, wrapStyle, paddingStyle) : paddingStyle
 
@@ -343,10 +344,10 @@ const VirtualList = Vue.component('virtual-list', {
       }, header) : null,
 
       // main list
-      h(wrapTag, {
+      h(tableMode ? 'tbody' : wrapTag, {
         class: wrapClass,
         attrs: {
-          role: 'group'
+          role: tableMode ? null : 'group'
         },
         style: wrapperStyle
       }, this.getRenderSlots(h)),
