@@ -320,24 +320,32 @@ const VirtualList = Vue.component('virtual-list', {
   // render function, a closer-to-the-compiler alternative to templates
   // https://vuejs.org/v2/guide/render-function.html#The-Data-Object-In-Depth
   render (h) {
-    const { header, footer } = this.$slots
+    const { before, header, footer } = this.$slots
     const { padFront, padBehind } = this.range
     const { isHorizontal, pageMode, rootTag, wrapTag, wrapClass, wrapStyle, headerTag, headerClass, headerStyle, footerTag, footerClass, footerStyle, tableMode } = this
     const paddingStyle = { padding: isHorizontal ? `0px ${padBehind}px 0px ${padFront}px` : `${padFront}px 0px ${padBehind}px` }
     const wrapperStyle = wrapStyle ? Object.assign({}, wrapStyle, paddingStyle) : paddingStyle
 
-    return h(rootTag, {
+    return h(tableMode ? 'table' : rootTag, {
       ref: 'root',
       on: {
         '&scroll': !pageMode && this.onScroll
       }
     }, [
+      // before slot
+      before ? h(Slot, {
+        props: {
+          tag: 'div',
+          event: EVENT_TYPE.SLOT
+        }
+      }, before) : null,
+
       // header slot
       header ? h(Slot, {
         class: headerClass,
         style: headerStyle,
         props: {
-          tag: headerTag,
+          tag: tableMode ? 'thead' : headerTag,
           event: EVENT_TYPE.SLOT,
           uniqueKey: SLOT_TYPE.HEADER
         }
@@ -357,7 +365,7 @@ const VirtualList = Vue.component('virtual-list', {
         class: footerClass,
         style: footerStyle,
         props: {
-          tag: footerTag,
+          tag: tableMode ? 'tfoot' : footerTag,
           event: EVENT_TYPE.SLOT,
           uniqueKey: SLOT_TYPE.FOOTER
         }
