@@ -12,12 +12,32 @@
 
   Vue = Vue && Object.prototype.hasOwnProperty.call(Vue, 'default') ? Vue['default'] : Vue;
 
+  function ownKeys(object, enumerableOnly) {
+    var keys = Object.keys(object);
+    if (Object.getOwnPropertySymbols) {
+      var symbols = Object.getOwnPropertySymbols(object);
+      enumerableOnly && (symbols = symbols.filter(function (sym) {
+        return Object.getOwnPropertyDescriptor(object, sym).enumerable;
+      })), keys.push.apply(keys, symbols);
+    }
+    return keys;
+  }
+  function _objectSpread2(target) {
+    for (var i = 1; i < arguments.length; i++) {
+      var source = null != arguments[i] ? arguments[i] : {};
+      i % 2 ? ownKeys(Object(source), !0).forEach(function (key) {
+        _defineProperty(target, key, source[key]);
+      }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys(Object(source)).forEach(function (key) {
+        Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key));
+      });
+    }
+    return target;
+  }
   function _classCallCheck(instance, Constructor) {
     if (!(instance instanceof Constructor)) {
       throw new TypeError("Cannot call a class as a function");
     }
   }
-
   function _defineProperties(target, props) {
     for (var i = 0; i < props.length; i++) {
       var descriptor = props[i];
@@ -27,13 +47,14 @@
       Object.defineProperty(target, descriptor.key, descriptor);
     }
   }
-
   function _createClass(Constructor, protoProps, staticProps) {
     if (protoProps) _defineProperties(Constructor.prototype, protoProps);
     if (staticProps) _defineProperties(Constructor, staticProps);
+    Object.defineProperty(Constructor, "prototype", {
+      writable: false
+    });
     return Constructor;
   }
-
   function _defineProperty(obj, key, value) {
     if (key in obj) {
       Object.defineProperty(obj, key, {
@@ -45,73 +66,30 @@
     } else {
       obj[key] = value;
     }
-
     return obj;
   }
-
-  function ownKeys(object, enumerableOnly) {
-    var keys = Object.keys(object);
-
-    if (Object.getOwnPropertySymbols) {
-      var symbols = Object.getOwnPropertySymbols(object);
-      if (enumerableOnly) symbols = symbols.filter(function (sym) {
-        return Object.getOwnPropertyDescriptor(object, sym).enumerable;
-      });
-      keys.push.apply(keys, symbols);
-    }
-
-    return keys;
-  }
-
-  function _objectSpread2(target) {
-    for (var i = 1; i < arguments.length; i++) {
-      var source = arguments[i] != null ? arguments[i] : {};
-
-      if (i % 2) {
-        ownKeys(Object(source), true).forEach(function (key) {
-          _defineProperty(target, key, source[key]);
-        });
-      } else if (Object.getOwnPropertyDescriptors) {
-        Object.defineProperties(target, Object.getOwnPropertyDescriptors(source));
-      } else {
-        ownKeys(Object(source)).forEach(function (key) {
-          Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key));
-        });
-      }
-    }
-
-    return target;
-  }
-
   function _toConsumableArray(arr) {
     return _arrayWithoutHoles(arr) || _iterableToArray(arr) || _unsupportedIterableToArray(arr) || _nonIterableSpread();
   }
-
   function _arrayWithoutHoles(arr) {
     if (Array.isArray(arr)) return _arrayLikeToArray(arr);
   }
-
   function _iterableToArray(iter) {
-    if (typeof Symbol !== "undefined" && Symbol.iterator in Object(iter)) return Array.from(iter);
+    if (typeof Symbol !== "undefined" && iter[Symbol.iterator] != null || iter["@@iterator"] != null) return Array.from(iter);
   }
-
   function _unsupportedIterableToArray(o, minLen) {
     if (!o) return;
     if (typeof o === "string") return _arrayLikeToArray(o, minLen);
     var n = Object.prototype.toString.call(o).slice(8, -1);
     if (n === "Object" && o.constructor) n = o.constructor.name;
-    if (n === "Map" || n === "Set") return Array.from(n);
+    if (n === "Map" || n === "Set") return Array.from(o);
     if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray(o, minLen);
   }
-
   function _arrayLikeToArray(arr, len) {
     if (len == null || len > arr.length) len = arr.length;
-
     for (var i = 0, arr2 = new Array(len); i < len; i++) arr2[i] = arr[i];
-
     return arr2;
   }
-
   function _nonIterableSpread() {
     throw new TypeError("Invalid attempt to spread non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method.");
   }
@@ -119,58 +97,59 @@
   /**
    * virtual list core calculating center
    */
+
   var DIRECTION_TYPE = {
     FRONT: 'FRONT',
     // scroll up or left
     BEHIND: 'BEHIND' // scroll down or right
-
   };
+
   var CALC_TYPE = {
     INIT: 'INIT',
     FIXED: 'FIXED',
     DYNAMIC: 'DYNAMIC'
   };
   var LEADING_BUFFER = 0;
-
   var Virtual = /*#__PURE__*/function () {
     function Virtual(param, callUpdate) {
       _classCallCheck(this, Virtual);
-
       this.init(param, callUpdate);
     }
-
     _createClass(Virtual, [{
       key: "init",
       value: function init(param, callUpdate) {
         // param data
         this.param = param;
-        this.callUpdate = callUpdate; // size data
+        this.callUpdate = callUpdate;
 
+        // size data
         this.sizes = new Map();
         this.firstRangeTotalSize = 0;
         this.firstRangeAverageSize = 0;
-        this.lastCalcIndex = 0;
         this.fixedSizeValue = 0;
-        this.calcType = CALC_TYPE.INIT; // scroll data
+        this.calcType = CALC_TYPE.INIT;
 
+        // scroll data
         this.offset = 0;
-        this.direction = ''; // range data
+        this.direction = '';
 
+        // range data
         this.range = Object.create(null);
-
         if (param) {
           this.checkRange(0, param.keeps - 1);
-        } // benchmark test data
+        }
+
+        // benchmark test data
         // this.__bsearchCalls = 0
         // this.__getIndexOffsetCalls = 0
-
       }
     }, {
       key: "destroy",
       value: function destroy() {
         this.init(null, null);
-      } // return current render range
+      }
 
+      // return current render range
     }, {
       key: "getRange",
       value: function getRange() {
@@ -190,8 +169,9 @@
       key: "isFront",
       value: function isFront() {
         return this.direction === DIRECTION_TYPE.FRONT;
-      } // return start index offset
+      }
 
+      // return start index offset
     }, {
       key: "getOffset",
       value: function getOffset(start) {
@@ -201,7 +181,6 @@
       key: "updateParam",
       value: function updateParam(key, value) {
         var _this = this;
-
         if (this.param && key in this.param) {
           // if uniqueIds change, find out deleted id and remove from size map
           if (key === 'uniqueIds') {
@@ -211,28 +190,29 @@
               }
             });
           }
-
           this.param[key] = value;
         }
-      } // save each size map by id
+      }
 
+      // save each size map by id
     }, {
       key: "saveSize",
       value: function saveSize(id, size) {
-        this.sizes.set(id, size); // we assume size type is fixed at the beginning and remember first size value
+        this.sizes.set(id, size);
+
+        // we assume size type is fixed at the beginning and remember first size value
         // if there is no size value different from this at next comming saving
         // we think it's a fixed size list, otherwise is dynamic size list
-
         if (this.calcType === CALC_TYPE.INIT) {
           this.fixedSizeValue = size;
           this.calcType = CALC_TYPE.FIXED;
         } else if (this.calcType === CALC_TYPE.FIXED && this.fixedSizeValue !== size) {
-          this.calcType = CALC_TYPE.DYNAMIC; // it's no use at all
-
+          this.calcType = CALC_TYPE.DYNAMIC;
+          // it's no use at all
           delete this.fixedSizeValue;
-        } // calculate the average size only in the first range
+        }
 
-
+        // calculate the average size only in the first range
         if (this.calcType !== CALC_TYPE.FIXED && typeof this.firstRangeTotalSize !== 'undefined') {
           if (this.sizes.size < Math.min(this.param.keeps, this.param.uniqueIds.length)) {
             this.firstRangeTotalSize = _toConsumableArray(this.sizes.values()).reduce(function (acc, val) {
@@ -244,97 +224,93 @@
             delete this.firstRangeTotalSize;
           }
         }
-      } // in some special situation (e.g. length change) we need to update in a row
-      // try goiong to render next range by a leading buffer according to current direction
+      }
 
+      // in some special situation (e.g. length change) we need to update in a row
+      // try goiong to render next range by a leading buffer according to current direction
     }, {
       key: "handleDataSourcesChange",
       value: function handleDataSourcesChange() {
         var start = this.range.start;
-
         if (this.isFront()) {
           start = start - LEADING_BUFFER;
         } else if (this.isBehind()) {
           start = start + LEADING_BUFFER;
         }
-
         start = Math.max(start, 0);
         this.updateRange(this.range.start, this.getEndByStart(start));
-      } // when slot size change, we also need force update
+      }
 
+      // when slot size change, we also need force update
     }, {
       key: "handleSlotSizeChange",
       value: function handleSlotSizeChange() {
         this.handleDataSourcesChange();
-      } // calculating range on scroll
+      }
 
+      // calculating range on scroll
     }, {
       key: "handleScroll",
       value: function handleScroll(offset) {
-        this.direction = offset < this.offset ? DIRECTION_TYPE.FRONT : DIRECTION_TYPE.BEHIND;
+        this.direction = offset < this.offset || offset === 0 ? DIRECTION_TYPE.FRONT : DIRECTION_TYPE.BEHIND;
         this.offset = offset;
-
         if (!this.param) {
           return;
         }
-
         if (this.direction === DIRECTION_TYPE.FRONT) {
           this.handleFront();
         } else if (this.direction === DIRECTION_TYPE.BEHIND) {
           this.handleBehind();
         }
-      } // ----------- public method end -----------
+      }
 
+      // ----------- public method end -----------
     }, {
       key: "handleFront",
       value: function handleFront() {
-        var overs = this.getScrollOvers(); // should not change range if start doesn't exceed overs
-
+        var overs = this.getScrollOvers();
+        // should not change range if start doesn't exceed overs
         if (overs > this.range.start) {
           return;
-        } // move up start by a buffer length, and make sure its safety
+        }
 
-
+        // move up start by a buffer length, and make sure its safety
         var start = Math.max(overs - this.param.buffer, 0);
         this.checkRange(start, this.getEndByStart(start));
       }
     }, {
       key: "handleBehind",
       value: function handleBehind() {
-        var overs = this.getScrollOvers(); // range should not change if scroll overs within buffer
-
+        var overs = this.getScrollOvers();
+        // range should not change if scroll overs within buffer
         if (overs < this.range.start + this.param.buffer) {
           return;
         }
-
         this.checkRange(overs, this.getEndByStart(overs));
-      } // return the pass overs according to current scroll offset
+      }
 
+      // return the pass overs according to current scroll offset
     }, {
       key: "getScrollOvers",
       value: function getScrollOvers() {
         // if slot header exist, we need subtract its size
         var offset = this.offset - this.param.slotHeaderSize;
-
         if (offset <= 0) {
           return 0;
-        } // if is fixed type, that can be easily
+        }
 
-
+        // if is fixed type, that can be easily
         if (this.isFixedType()) {
           return Math.floor(offset / this.fixedSizeValue);
         }
-
         var low = 0;
         var middle = 0;
         var middleOffset = 0;
         var high = this.param.uniqueIds.length;
-
         while (low <= high) {
           // this.__bsearchCalls++
           middle = low + Math.floor((high - low) / 2);
           middleOffset = this.getIndexOffset(middle);
-
           if (middleOffset === offset) {
             return middle;
           } else if (middleOffset < offset) {
@@ -343,52 +319,50 @@
             high = middle - 1;
           }
         }
-
         return low > 0 ? --low : 0;
-      } // return a scroll offset from given index, can efficiency be improved more here?
-      // although the call frequency is very high, its only a superposition of numbers
+      }
 
+      // return a scroll offset from given index, can efficiency be improved more here?
+      // although the call frequency is very high, its only a superposition of numbers
     }, {
       key: "getIndexOffset",
       value: function getIndexOffset(givenIndex) {
         if (!givenIndex) {
           return 0;
         }
-
         var offset = 0;
         var indexSize = 0;
-
         for (var index = 0; index < givenIndex; index++) {
           // this.__getIndexOffsetCalls++
           indexSize = this.sizes.get(this.param.uniqueIds[index]);
           offset = offset + (typeof indexSize === 'number' ? indexSize : this.getEstimateSize());
-        } // remember last calculate index
-
-
-        this.lastCalcIndex = Math.max(this.lastCalcIndex, givenIndex - 1);
-        this.lastCalcIndex = Math.min(this.lastCalcIndex, this.getLastIndex());
+        }
         return offset;
-      } // is fixed size type
+      }
 
+      // is fixed size type
     }, {
       key: "isFixedType",
       value: function isFixedType() {
         return this.calcType === CALC_TYPE.FIXED;
-      } // return the real last index
+      }
 
+      // return the real last index
     }, {
       key: "getLastIndex",
       value: function getLastIndex() {
         return this.param.uniqueIds.length - 1;
-      } // in some conditions range is broke, we need correct it
-      // and then decide whether need update to next range
+      }
 
+      // in some conditions range is broke, we need correct it
+      // and then decide whether need update to next range
     }, {
       key: "checkRange",
       value: function checkRange(start, end) {
         var keeps = this.param.keeps;
-        var total = this.param.uniqueIds.length; // datas less than keeps, render all
+        var total = this.param.uniqueIds.length;
 
+        // datas less than keeps, render all
         if (total <= keeps) {
           start = 0;
           end = this.getLastIndex();
@@ -396,12 +370,12 @@
           // if range length is less than keeps, corrent it base on end
           start = end - keeps + 1;
         }
-
         if (this.range.start !== start) {
           this.updateRange(start, end);
         }
-      } // setting to a new range and rerender
+      }
 
+      // setting to a new range and rerender
     }, {
       key: "updateRange",
       value: function updateRange(start, end) {
@@ -410,16 +384,18 @@
         this.range.padFront = this.getPadFront();
         this.range.padBehind = this.getPadBehind();
         this.callUpdate(this.getRange());
-      } // return end base on start
+      }
 
+      // return end base on start
     }, {
       key: "getEndByStart",
       value: function getEndByStart(start) {
         var theoryEnd = start + this.param.keeps - 1;
         var truelyEnd = Math.min(theoryEnd, this.getLastIndex());
         return truelyEnd;
-      } // return total front offset
+      }
 
+      // return total front offset
     }, {
       key: "getPadFront",
       value: function getPadFront() {
@@ -428,40 +404,34 @@
         } else {
           return this.getIndexOffset(this.range.start);
         }
-      } // return total behind offset
+      }
 
+      // return total behind offset
     }, {
       key: "getPadBehind",
       value: function getPadBehind() {
         var end = this.range.end;
         var lastIndex = this.getLastIndex();
-
         if (this.isFixedType()) {
           return (lastIndex - end) * this.fixedSizeValue;
-        } // if it's all calculated, return the exactly offset
-
-
-        if (this.lastCalcIndex === lastIndex) {
-          return this.getIndexOffset(lastIndex) - this.getIndexOffset(end);
-        } else {
-          // if not, use a estimated value
-          return (lastIndex - end) * this.getEstimateSize();
         }
-      } // get the item estimate size
+        return (lastIndex - end) * this.getEstimateSize();
+      }
 
+      // get the item estimate size
     }, {
       key: "getEstimateSize",
       value: function getEstimateSize() {
         return this.isFixedType() ? this.fixedSizeValue : this.firstRangeAverageSize || this.param.estimateSize;
       }
     }]);
-
     return Virtual;
   }();
 
   /**
    * props declaration for default, item and slot component
    */
+
   var VirtualProps = {
     dataKey: {
       type: [String, Function],
@@ -493,8 +463,8 @@
     direction: {
       type: String,
       "default": 'vertical' // the other value is horizontal
-
     },
+
     start: {
       type: Number,
       "default": 0
@@ -627,7 +597,6 @@
     },
     mounted: function mounted() {
       var _this = this;
-
       if (typeof ResizeObserver !== 'undefined') {
         this.resizeObserver = new ResizeObserver(function () {
           _this.dispatchSizeChange();
@@ -637,7 +606,8 @@
     },
     // since componet will be reused, so disptach when updated
     updated: function updated() {
-      this.dispatchSizeChange();
+      // this.dispatchSizeChange()
+      this.resizeObserver.observe(this.$el);
     },
     beforeDestroy: function beforeDestroy() {
       if (this.resizeObserver) {
@@ -654,13 +624,15 @@
         this.$parent.$emit(this.event, this.uniqueKey, this.getCurrentSize(), this.hasInitial);
       }
     }
-  }; // wrapping for item
+  };
 
+  // wrapping for item
   var Item = Vue.component('virtual-list-item', {
     mixins: [Wrapper],
     props: ItemProps,
     render: function render(h) {
       var tag = this.tag,
+<<<<<<< HEAD
           component = this.component,
           _this$extraProps = this.extraProps,
           extraProps = _this$extraProps === void 0 ? {} : _this$extraProps,
@@ -673,32 +645,44 @@
           tableMode = this.tableMode;
 
       var props = _objectSpread2({}, extraProps, {
+=======
+        component = this.component,
+        _this$extraProps = this.extraProps,
+        extraProps = _this$extraProps === void 0 ? {} : _this$extraProps,
+        index = this.index,
+        source = this.source,
+        _this$scopedSlots = this.scopedSlots,
+        scopedSlots = _this$scopedSlots === void 0 ? {} : _this$scopedSlots,
+        uniqueKey = this.uniqueKey,
+        slotComponent = this.slotComponent;
+      var props = _objectSpread2(_objectSpread2({}, extraProps), {}, {
+>>>>>>> upstream/master
         source: source,
         index: index
       });
-
       return h(tag, {
         key: uniqueKey,
         attrs: {
           role: tableMode ? null : 'listitem'
         }
-      }, [slotComponent ? h('div', slotComponent({
+      }, [slotComponent ? slotComponent({
         item: source,
         index: index,
         scope: props
-      })) : h(component, {
+      }) : h(component, {
         props: props,
         scopedSlots: scopedSlots
       })]);
     }
-  }); // wrapping for slot
+  });
 
+  // wrapping for slot
   var Slot = Vue.component('virtual-list-slot', {
     mixins: [Wrapper],
     props: SlotProps,
     render: function render(h) {
       var tag = this.tag,
-          uniqueKey = this.uniqueKey;
+        uniqueKey = this.uniqueKey;
       return h(tag, {
         key: uniqueKey,
         attrs: {
@@ -746,10 +730,12 @@
     created: function created() {
       this.isHorizontal = this.direction === 'horizontal';
       this.directionKey = this.isHorizontal ? 'scrollLeft' : 'scrollTop';
-      this.installVirtual(); // listen item size change
+      this.installVirtual();
 
-      this.$on(EVENT_TYPE.ITEM, this.onItemResized); // listen slot size change
+      // listen item size change
+      this.$on(EVENT_TYPE.ITEM, this.onItemResized);
 
+      // listen slot size change
       if (this.$slots.header || this.$slots.footer) {
         this.$on(EVENT_TYPE.SLOT, this.onSlotResized);
       }
@@ -757,7 +743,6 @@
     activated: function activated() {
       // set back offset when awake from keep-alive
       this.scrollToOffset(this.virtual.offset);
-
       if (this.pageMode) {
         document.addEventListener('scroll', this.onScroll, {
           passive: false
@@ -775,9 +760,9 @@
         this.scrollToIndex(this.start);
       } else if (this.offset) {
         this.scrollToOffset(this.offset);
-      } // in page mode we bind scroll event to document
+      }
 
-
+      // in page mode we bind scroll event to document
       if (this.pageMode) {
         this.updatePageModeFront();
         document.addEventListener('scroll', this.onScroll, {
@@ -787,7 +772,6 @@
     },
     beforeDestroy: function beforeDestroy() {
       this.virtual.destroy();
-
       if (this.pageMode) {
         document.removeEventListener('scroll', this.onScroll);
       }
@@ -813,7 +797,6 @@
       // return client viewport size
       getClientSize: function getClientSize() {
         var key = this.isHorizontal ? 'clientWidth' : 'clientHeight';
-
         if (this.pageMode) {
           return document.documentElement[key] || document.body[key];
         } else {
@@ -824,7 +807,6 @@
       // return all scroll size
       getScrollSize: function getScrollSize() {
         var key = this.isHorizontal ? 'scrollWidth' : 'scrollHeight';
-
         if (this.pageMode) {
           return document.documentElement[key] || document.body[key];
         } else {
@@ -839,7 +821,6 @@
           document.documentElement[this.directionKey] = offset;
         } else {
           var root = this.$refs.root;
-
           if (root) {
             root[this.directionKey] = offset;
           }
@@ -858,15 +839,14 @@
       // set current scroll position to bottom
       scrollToBottom: function scrollToBottom() {
         var _this = this;
-
         var shepherd = this.$refs.shepherd;
-
         if (shepherd) {
           var offset = shepherd[this.isHorizontal ? 'offsetLeft' : 'offsetTop'];
-          this.scrollToOffset(offset); // check if it's really scrolled to the bottom
+          this.scrollToOffset(offset);
+
+          // check if it's really scrolled to the bottom
           // maybe list doesn't render and calculate to last range
           // so we need retry in next event loop until it really at bottom
-
           setTimeout(function () {
             if (_this.getOffset() + _this.getClientSize() + 1 < _this.getScrollSize()) {
               _this.scrollToBottom();
@@ -878,7 +858,6 @@
       // taking root offset relative to the browser as slot header size
       updatePageModeFront: function updatePageModeFront() {
         var root = this.$refs.root;
-
         if (root) {
           var rect = root.getBoundingClientRect();
           var defaultView = root.ownerDocument.defaultView;
@@ -902,8 +881,9 @@
           buffer: Math.round(this.keeps / 3),
           // recommend for a third of keeps
           uniqueIds: this.getUniqueIdFromDataSources()
-        }, this.onRangeChanged); // sync initial range
+        }, this.onRangeChanged);
 
+        // sync initial range
         this.range = this.virtual.getRange();
       },
       getUniqueIdFromDataSources: function getUniqueIdFromDataSources() {
@@ -924,7 +904,6 @@
         } else if (type === SLOT_TYPE.FOOTER) {
           this.virtual.updateParam('slotFooterSize', size);
         }
-
         if (hasInit) {
           this.virtual.handleSlotSizeChange();
         }
@@ -936,19 +915,18 @@
       onScroll: function onScroll(evt) {
         var offset = this.getOffset();
         var clientSize = this.getClientSize();
-        var scrollSize = this.getScrollSize(); // iOS scroll-spring-back behavior will make direction mistake
+        var scrollSize = this.getScrollSize();
 
+        // iOS scroll-spring-back behavior will make direction mistake
         if (offset < 0 || offset + clientSize > scrollSize + 1 || !scrollSize) {
           return;
         }
-
         this.virtual.handleScroll(offset);
         this.emitEvent(offset, clientSize, scrollSize, evt);
       },
       // emit event in special position
       emitEvent: function emitEvent(offset, clientSize, scrollSize, evt) {
         this.$emit('scroll', evt, this.virtual.getRange());
-
         if (this.virtual.isFront() && !!this.dataSources.length && offset - this.topThreshold <= 0) {
           this.$emit('totop');
         } else if (this.virtual.isBehind() && offset + clientSize + this.bottomThreshold >= scrollSize) {
@@ -961,9 +939,10 @@
       getRenderSlots: function getRenderSlots(h) {
         var slots = [];
         var _this$range = this.range,
-            start = _this$range.start,
-            end = _this$range.end;
+          start = _this$range.start,
+          end = _this$range.end;
         var dataSources = this.dataSources,
+<<<<<<< HEAD
             dataKey = this.dataKey,
             itemClass = this.itemClass,
             itemTag = this.itemTag,
@@ -973,14 +952,21 @@
             dataComponent = this.dataComponent,
             itemScopedSlots = this.itemScopedSlots,
             tableMode = this.tableMode;
+=======
+          dataKey = this.dataKey,
+          itemClass = this.itemClass,
+          itemTag = this.itemTag,
+          itemStyle = this.itemStyle,
+          isHorizontal = this.isHorizontal,
+          extraProps = this.extraProps,
+          dataComponent = this.dataComponent,
+          itemScopedSlots = this.itemScopedSlots;
+>>>>>>> upstream/master
         var slotComponent = this.$scopedSlots && this.$scopedSlots.item;
-
         for (var index = start; index <= end; index++) {
           var dataSource = dataSources[index];
-
           if (dataSource) {
             var uniqueKey = typeof dataKey === 'function' ? dataKey(dataSource) : dataSource[dataKey];
-
             if (typeof uniqueKey === 'string' || typeof uniqueKey === 'number') {
               slots.push(h(Item, {
                 props: {
@@ -1006,7 +992,6 @@
             console.warn("Cannot get the index '".concat(index, "' from data-sources."));
           }
         }
-
         return slots;
       }
     },
@@ -1014,13 +999,19 @@
     // https://vuejs.org/v2/guide/render-function.html#The-Data-Object-In-Depth
     render: function render(h) {
       var _this$$slots = this.$slots,
+<<<<<<< HEAD
           before = _this$$slots.before,
           header = _this$$slots.header,
           footer = _this$$slots.footer;
+=======
+        header = _this$$slots.header,
+        footer = _this$$slots.footer;
+>>>>>>> upstream/master
       var _this$range2 = this.range,
-          padFront = _this$range2.padFront,
-          padBehind = _this$range2.padBehind;
+        padFront = _this$range2.padFront,
+        padBehind = _this$range2.padBehind;
       var isHorizontal = this.isHorizontal,
+<<<<<<< HEAD
           pageMode = this.pageMode,
           rootTag = this.rootTag,
           wrapTag = this.wrapTag,
@@ -1033,6 +1024,19 @@
           footerClass = this.footerClass,
           footerStyle = this.footerStyle,
           tableMode = this.tableMode;
+=======
+        pageMode = this.pageMode,
+        rootTag = this.rootTag,
+        wrapTag = this.wrapTag,
+        wrapClass = this.wrapClass,
+        wrapStyle = this.wrapStyle,
+        headerTag = this.headerTag,
+        headerClass = this.headerClass,
+        headerStyle = this.headerStyle,
+        footerTag = this.footerTag,
+        footerClass = this.footerClass,
+        footerStyle = this.footerStyle;
+>>>>>>> upstream/master
       var paddingStyle = {
         padding: isHorizontal ? "0px ".concat(padBehind, "px 0px ").concat(padFront, "px") : "".concat(padFront, "px 0px ").concat(padBehind, "px")
       };
@@ -1042,6 +1046,7 @@
         on: {
           '&scroll': !pageMode && this.onScroll
         }
+<<<<<<< HEAD
       }, [// before slot
       before ? h(Slot, {
         props: {
@@ -1049,6 +1054,10 @@
           event: EVENT_TYPE.SLOT
         }
       }, before) : null, // header slot
+=======
+      }, [
+      // header slot
+>>>>>>> upstream/master
       header ? h(Slot, {
         "class": headerClass,
         style: headerStyle,
@@ -1057,14 +1066,21 @@
           event: EVENT_TYPE.SLOT,
           uniqueKey: SLOT_TYPE.HEADER
         }
+<<<<<<< HEAD
       }, header) : null, // main list
       h(tableMode ? 'tbody' : wrapTag, {
+=======
+      }, header) : null,
+      // main list
+      h(wrapTag, {
+>>>>>>> upstream/master
         "class": wrapClass,
         attrs: {
           role: tableMode ? null : 'group'
         },
         style: wrapperStyle
-      }, this.getRenderSlots(h)), // footer slot
+      }, this.getRenderSlots(h)),
+      // footer slot
       footer ? h(Slot, {
         "class": footerClass,
         style: footerStyle,
@@ -1073,7 +1089,8 @@
           event: EVENT_TYPE.SLOT,
           uniqueKey: SLOT_TYPE.FOOTER
         }
-      }, footer) : null, // an empty element use to scroll to bottom
+      }, footer) : null,
+      // an empty element use to scroll to bottom
       h('div', {
         ref: 'shepherd',
         style: {

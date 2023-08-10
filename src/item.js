@@ -22,7 +22,8 @@ const Wrapper = {
 
   // since componet will be reused, so disptach when updated
   updated () {
-    this.dispatchSizeChange()
+    // this.dispatchSizeChange()
+    this.resizeObserver.observe(this.$el)
   },
 
   beforeDestroy () {
@@ -63,7 +64,7 @@ export const Item = Vue.component('virtual-list-item', {
       attrs: {
         role: tableMode ? null : 'listitem'
       }
-    }, [slotComponent ? h('div', slotComponent({ item: source, index: index, scope: props })) : h(component, {
+    }, [slotComponent ? slotComponent({ item: source, index: index, scope: props }) : h(component, {
       props,
       scopedSlots: scopedSlots
     })])
